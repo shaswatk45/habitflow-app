@@ -1536,6 +1536,7 @@
   <header class="header">
     <div class="logo">habit<span>flow</span></div>
     <div class="header-sub">Build better habits, one day at a time</div>
+    <div id="userDisplay" style="font-size: 13px; font-weight: 600; cursor: pointer; color: var(--accent); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);" title="Click to switch user">👤 user</div>
     <button class="theme-toggle" id="themeToggle" title="Toggle dark mode"></button>
   </header>
 
@@ -1844,7 +1845,27 @@
 
     const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
-     // Global State
+    // Global State
+    let currentUser = localStorage.getItem('hf_username') || '';
+    if (!currentUser) {
+      currentUser = prompt('Enter your username to access your habits:');
+      if (!currentUser) currentUser = 'anonymous';
+      localStorage.setItem('hf_username', currentUser);
+    }
+    
+    // UI for switching user
+    const userDisplay = document.getElementById('userDisplay');
+    if (userDisplay) {
+      userDisplay.innerText = `👤 ${currentUser}`;
+      userDisplay.addEventListener('click', () => {
+        const newUser = prompt('Switch to user:', currentUser);
+        if (newUser && newUser.trim() !== '' && newUser !== currentUser) {
+          localStorage.setItem('hf_username', newUser.trim());
+          window.location.reload();
+        }
+      });
+    }
+
     const state = {
       habits: [],
       data: {},
@@ -1968,12 +1989,14 @@
       // Fetch habits
       const { data: habitsData } = await supaClient
         .from('habits')
-        .select('*');
+        .select('*')
+        .eq('user_id', currentUser);
 
       // Fetch completions
       const { data: completionsData } = await supaClient
         .from('completions')
-        .select('*');
+        .select('*')
+        .eq('user_id', currentUser);
 
       const habits = habitsData || [];
       const data = {};
@@ -2031,7 +2054,31 @@
     function nk(d) { return `note_${state.viewYear}_${state.viewMonth}_${d}`; }
 
     function isChecked(hid, d) { return !!state.data[gk(hid, d)]; }
-    function setChecked(hid, d, v) { state.data[gk(hid, d)] = v; recalcStreaks(hid); saveState(); }
+    
+    async function setChecked(hid, d, v) { 
+      state.data[gk(hid, d)] = v; 
+      recalcStreaks(hid); 
+      saveState(); 
+
+      // Sync with Supabase asynchronously
+      const dateStr = new Date(state.viewYear, state.viewMonth, d).toISOString().split('T')[0];
+      
+      // Always delete first to ensure no duplicates for this user/habit/date combo
+      await supaClient.from('completions')
+        .delete()
+        .eq('habit_id', hid)
+        .eq('user_id', currentUser)
+        .eq('completed_on', dateStr);
+        
+      // If checked, insert a new record
+      if (v) {
+        await supaClient.from('completions').insert({ 
+          habit_id: hid, 
+          user_id: currentUser, 
+          completed_on: dateStr 
+        });
+      }
+    }
 
     function recalcStreaks(hid) {
       const days = [];
@@ -2578,10 +2625,10 @@
       }
 
       try {
-        console.log('Adding habit to Supabase:', { name, category });
+        console.log('Adding habit to Supabase:', { name, category, user_id: currentUser });
         const { data, error } = await supaClient
           .from('habits')
-          .insert({ name, category })
+          .insert({ name, category, user_id: currentUser })
           .select('id, name, category')
           .single();
 
