@@ -1840,9 +1840,17 @@
   <script>
 
     const SUPABASE_URL = "https://tbriupljhrrnmzrnrlgi.supabase.co";
-    const SUPABASE_KEY = "YOUR_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicml1cGxqaHJybm16cm5ybGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTUzNTIsImV4cCI6MjA4OTMzMTM1Mn0.DGcGBRkz_ACKXmPREq5lh42WXdZbYe75O0AbFuTpN-UANON_KEY";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicml1cGxqaHJybm16cm5ybGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTUzNTIsImV4cCI6MjA4OTMzMTM1Mn0.DGcGBRkz_ACKXmPREq5lh42WXdZbYe75O0AbFuTpN-U";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    function saveState() {
+      try {
+        localStorage.setItem('hf_v3', JSON.stringify(state));
+      } catch (e) {
+        console.error('Failed to save state to localStorage:', e);
+      }
+    }
     // ══════════════════════════════════════════════════════════════════════════════
     // CONSTANTS & STATE
     // ══════════════════════════════════════════════════════════════════════════════
@@ -1982,16 +1990,18 @@
     async function init() {
       const loaded = await loadState();
       Object.assign(state, loaded);
+      
+      // Ensure fields exist for older saved states
+      if (!state.viewYear) state.viewYear = YEAR;
+      if (!state.viewMonth && state.viewMonth !== 0) state.viewMonth = MONTH;
+      if (!state.xp) state.xp = 0;
+      if (!state.unlockedAch) state.unlockedAch = [];
+      if (!state.aiHistory) state.aiHistory = [];
+      
       renderAll();
     }
 
     init();
-    // Ensure fields exist for older saved states
-    if (!state.viewYear) state.viewYear = YEAR;
-    if (!state.viewMonth && state.viewMonth !== 0) state.viewMonth = MONTH;
-    if (!state.xp) state.xp = 0;
-    if (!state.unlockedAch) state.unlockedAch = [];
-    if (!state.aiHistory) state.aiHistory = [];
 
     let activeFilter = 'all';
     let activeWeek = 0;  // 0=all on desktop, 0-3 on mobile
@@ -2565,10 +2575,11 @@
         state.habits.push({
           id: data.id,
           name: data.name,
-          category: data.category,
+          cat: data.category,
         });
 
         nameEl.value = '';
+        closeAddModal();
         renderTracker();
       } catch (err) {
         console.error('Failed to add habit:', err);
@@ -2853,8 +2864,6 @@ ${buildHabitSummary()}`;
       renderSettings();
       checkAchievements();
     }
-
-    renderAll();
   </script>
 </body>
 
