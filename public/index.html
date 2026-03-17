@@ -1842,7 +1842,7 @@
     const SUPABASE_URL = "https://tbriupljhrrnmzrnrlgi.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicml1cGxqaHJybm16cm5ybGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTUzNTIsImV4cCI6MjA4OTMzMTM1Mn0.DGcGBRkz_ACKXmPREq5lh42WXdZbYe75O0AbFuTpN-U";
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
      // Global State
     const state = {
@@ -1860,7 +1860,7 @@
     
     // Debug exports
     window.state = state;
-    window.supabase = supabase;
+    window.supaClient = supaClient;
 
     function saveState() {
       try {
@@ -1966,12 +1966,12 @@
 
     async function loadState() {
       // Fetch habits
-      const { data: habitsData } = await supabase
+      const { data: habitsData } = await supaClient
         .from('habits')
         .select('*');
 
       // Fetch completions
-      const { data: completionsData } = await supabase
+      const { data: completionsData } = await supaClient
         .from('completions')
         .select('*');
 
@@ -2579,7 +2579,7 @@
 
       try {
         console.log('Adding habit to Supabase:', { name, category });
-        const { data, error } = await supabase
+        const { data, error } = await supaClient
           .from('habits')
           .insert({ name, category })
           .select('id, name, category')
