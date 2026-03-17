@@ -1938,19 +1938,54 @@
       { id: 'h7', name: '🌙 Sleep Before Midnight', cat: 'Lifestyle' },
     ];
 
-    function loadState() {
-      try {
-        const s = JSON.parse(localStorage.getItem('hf_v3') || 'null');
-        if (s) return s;
-      } catch (e) { }
+    async function loadState() {
+      // Fetch habits
+      const { data: habitsData } = await supabase
+        .from('habits')
+        .select('*');
+
+      // Fetch completions
+      const { data: completionsData } = await supabase
+        .from('completions')
+        .select('*');
+
+      const habits = habitsData || [];
+      const data = {};
+
+      // Convert completions → your old format
+      completionsData?.forEach(c => {
+        const date = new Date(c.completed_on);
+        const key = `${c.habit_id}_${date.getFullYear()}_${date.getMonth()}_${date.getDate()}`;
+        data[key] = true;
+      });
+
       return {
-        habits: DEFAULT_HABITS, data: {}, notes: {}, streaks: {}, bestStreaks: {},
-        viewYear: YEAR, viewMonth: MONTH, xp: 0, unlockedAch: [], aiHistory: []
+        habits: habits.map(h => ({
+          id: h.id,
+          name: h.name,
+          cat: h.category
+        })),
+        data,
+        notes: {},
+        streaks: {},
+        bestStreaks: {},
+        viewYear: new Date().getFullYear(),
+        viewMonth: new Date().getMonth(),
+        xp: 0,
+        unlockedAch: [],
+        aiHistory: []
       };
-    }
+    }}
     function saveState() { localStorage.setItem('hf_v3', JSON.stringify(state)); }
 
-    let state = loadState();
+    let state = {};
+
+    async function init() {
+      state = await loadState();
+      renderAll();
+    }
+
+    init();
     // Ensure fields exist for older saved states
     if (!state.viewYear) state.viewYear = YEAR;
     if (!state.viewMonth && state.viewMonth !== 0) state.viewMonth = MONTH;
@@ -2506,14 +2541,40 @@
     document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
     document.getElementById('addModalSave').addEventListener('click', addHabit);
     document.getElementById('newHabitName').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
-    function addHabit() {
-      const name = document.getElementById('newHabitName').value.trim();
-      const cat = document.getElementById('newHabitCat').value;
-      if (!name) return;
-      const id = 'h' + Date.now();
-      state.habits.push({ id, name, cat });
-      recalcStreaks(id); saveState(); closeAddModal(); renderAll();
-      checkAchievements();
+    async function addHabit() {
+      const nameEl = document.getElementById('newHabitName');
+      const catEl = document.getElementById('newHabitCat');
+
+      const name = nameEl.value.trim();
+      const category = catEl.value.trim();
+
+      if (!name) {
+        nameEl.focus();
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('habits')
+          .insert({ name, category })
+          .select('id, name, category')
+          .single();
+
+        if (error) throw error;
+
+        state.habits.push({
+          id: data.id,
+          name: data.name,
+          category: data.category,
+        });
+
+        nameEl.value = '';
+        renderTracker();
+      } catch (err) {
+        console.error('Failed to add habit:', err);
+        // swap alert() for a toast/inline error in production
+        alert(err.message ?? 'Error saving habit');
+      }
     }
     document.getElementById('addHabitBtn').addEventListener('click', openAddModal);
     document.getElementById('settingsAddHabitBtn').addEventListener('click', openAddModal);

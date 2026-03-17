@@ -1,0 +1,3 @@
+Mismatched closing } at line 1978, col 6
+Unclosed { starting at line 2783, col 26
+Unclosed ( starting at line 2791, col 23
