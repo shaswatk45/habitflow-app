@@ -19,9 +19,9 @@
       --text: #1A1714;
       --text2: #6B6560;
       --text3: #9E9790;
-      --accent: #2D6A4F;
-      --accent2: #52B788;
-      --accent3: #B7E4C7;
+      --accent: #D81B60;
+      --accent2: #F06292;
+      --accent3: #F8BBD0;
       --accent-warm: #E76F51;
       --accent-warm2: #F4A261;
       --streak: #E76F51;
@@ -35,10 +35,10 @@
       --radius: 14px;
       --radius-sm: 8px;
       --h0: #E8E3D9;
-      --h1: #B7E4C7;
-      --h2: #74C69D;
-      --h3: #40916C;
-      --h4: #1B4332;
+      --h1: #F8BBD0;
+      --h2: #F48FB1;
+      --h3: #F06292;
+      --h4: #D81B60;
     }
 
     [data-theme="dark"] {
@@ -49,9 +49,9 @@
       --text: #F4F1EB;
       --text2: #A09890;
       --text3: #6B6560;
-      --accent: #52B788;
-      --accent2: #74C69D;
-      --accent3: #1B4332;
+      --accent: #F06292;
+      --accent2: #F48FB1;
+      --accent3: #AD1457;
       --shadow: 0 2px 12px rgba(0, 0, 0, .3);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, .4);
       --h0: #252220;
@@ -2577,6 +2577,7 @@
         return;
       }
 
+      try {
         console.log('Adding habit to Supabase:', { name, category });
         const { data, error } = await supabase
           .from('habits')
