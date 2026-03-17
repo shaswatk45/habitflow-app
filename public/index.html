@@ -1844,6 +1844,20 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
+    // Global State
+    const state = {
+      habits: [],
+      data: {},
+      notes: {},
+      streaks: {},
+      bestStreaks: {},
+      viewYear: new Date().getFullYear(),
+      viewMonth: new Date().getMonth(),
+      xp: 0,
+      unlockedAch: [],
+      aiHistory: []
+    };
+
     function saveState() {
       try {
         localStorage.setItem('hf_v3', JSON.stringify(state));
@@ -1985,8 +1999,6 @@
       };
     }
 
-    const state = {};
-
     async function init() {
       const loaded = await loadState();
       Object.assign(state, loaded);
@@ -2001,8 +2013,6 @@
       renderAll();
     }
 
-    init();
-
     let activeFilter = 'all';
     let activeWeek = 0;  // 0=all on desktop, 0-3 on mobile
     let noteTarget = null;
@@ -2011,10 +2021,10 @@
     // ══════════════════════════════════════════════════════════════════════════════
     // HELPERS
     // ══════════════════════════════════════════════════════════════════════════════
-    const vd = () => new Date(state.viewYear, state.viewMonth + 1, 0).getDate();
-    const vc = () => state.viewYear === YEAR && state.viewMonth === MONTH;
-    const gk = (hid, d) => `${hid}_${state.viewYear}_${state.viewMonth}_${d}`;
-    const nk = (d) => `note_${state.viewYear}_${state.viewMonth}_${d}`;
+    function vd() { return new Date(state.viewYear, state.viewMonth + 1, 0).getDate(); }
+    function vc() { return state.viewYear === YEAR && state.viewMonth === MONTH; }
+    function gk(hid, d) { return `${hid}_${state.viewYear}_${state.viewMonth}_${d}`; }
+    function nk(d) { return `note_${state.viewYear}_${state.viewMonth}_${d}`; }
 
     function isChecked(hid, d) { return !!state.data[gk(hid, d)]; }
     function setChecked(hid, d, v) { state.data[gk(hid, d)] = v; recalcStreaks(hid); saveState(); }
@@ -2864,6 +2874,8 @@ ${buildHabitSummary()}`;
       renderSettings();
       checkAchievements();
     }
+
+    init();
   </script>
 </body>
 
