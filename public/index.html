@@ -1844,7 +1844,7 @@
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
-    // Global State
+     // Global State
     const state = {
       habits: [],
       data: {},
@@ -1857,6 +1857,10 @@
       unlockedAch: [],
       aiHistory: []
     };
+    
+    // Debug exports
+    window.state = state;
+    window.supabase = supabase;
 
     function saveState() {
       try {
@@ -2573,14 +2577,19 @@
         return;
       }
 
-      try {
+        console.log('Adding habit to Supabase:', { name, category });
         const { data, error } = await supabase
           .from('habits')
           .insert({ name, category })
           .select('id, name, category')
           .single();
 
-        if (error) throw error;
+        if (error) {
+           console.error('Supabase insert error:', error);
+           throw error;
+        }
+
+        console.log('Habit added successfully:', data);
 
         state.habits.push({
           id: data.id,
@@ -2588,9 +2597,12 @@
           cat: data.category,
         });
 
+        recalcStreaks(data.id);
         nameEl.value = '';
         closeAddModal();
         renderTracker();
+        updateHero();
+        showToast('Habit added successfully!', 'green');
       } catch (err) {
         console.error('Failed to add habit:', err);
         // swap alert() for a toast/inline error in production
