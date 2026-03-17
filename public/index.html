@@ -1532,6 +1532,30 @@
 
 <body>
 
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="container" style="display: flex; justify-content: center; margin-top: 100px;">
+    <div class="card" style="width: 100%; max-width: 400px; padding: 32px;">
+      <div style="font-family: 'Syne'; font-weight: 800; font-size: 24px; color: var(--accent); text-align: center; margin-bottom: 24px;">habit<span>flow</span></div>
+      <p style="text-align: center; color: var(--text2); margin-bottom: 24px; font-size: 14px;">Sign in to your account</p>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);">Email</label>
+        <input type="email" id="authEmail" class="modal-input" placeholder="your@email.com">
+      </div>
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);">Password</label>
+        <input type="password" id="authPassword" class="modal-input" placeholder="••••••••">
+      </div>
+      <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+        <button class="btn btn-primary" id="btnSignIn" style="flex: 1;">Sign In</button>
+        <button class="btn btn-primary" id="btnSignUp" style="flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border);">Sign Up</button>
+      </div>
+      <div id="authError" style="color: var(--accent-warm); font-size: 13px; text-align: center; display: none;"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" style="display: none;">
+
   <!-- HEADER -->
   <header class="header">
     <div class="logo">habit<span>flow</span></div>
@@ -1838,6 +1862,8 @@
   <!-- ACHIEVEMENT TOAST -->
   <div class="toast" id="toast"></div>
 
+  </div> <!-- Close mainApp -->
+
   <script>
 
     const SUPABASE_URL = "https://tbriupljhrrnmzrnrlgi.supabase.co";
@@ -1846,25 +1872,54 @@
     const supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     // Global State
-    let currentUser = localStorage.getItem('hf_username') || '';
-    if (!currentUser) {
-      currentUser = prompt('Enter your username to access your habits:');
-      if (!currentUser) currentUser = 'anonymous';
-      localStorage.setItem('hf_username', currentUser);
-    }
+    let currentUser = null;
     
     // UI for switching user
     const userDisplay = document.getElementById('userDisplay');
     if (userDisplay) {
-      userDisplay.innerText = `👤 ${currentUser}`;
-      userDisplay.addEventListener('click', () => {
-        const newUser = prompt('Switch to user:', currentUser);
-        if (newUser && newUser.trim() !== '' && newUser !== currentUser) {
-          localStorage.setItem('hf_username', newUser.trim());
-          window.location.reload();
-        }
+      userDisplay.addEventListener('click', async () => {
+        await supaClient.auth.signOut();
       });
     }
+
+    // Auth flows
+    supaClient.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session);
+      if (session) {
+        currentUser = session.user;
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        if (userDisplay) userDisplay.innerText = `👤 ${currentUser.email} (Sign Out)`;
+        
+        // Load data on login
+        await init();
+      } else {
+        currentUser = null;
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'flex';
+      }
+    });
+
+    document.getElementById('btnSignIn').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const errorEl = document.getElementById('authError');
+      errorEl.style.display = 'none';
+      if (!email || !password) { errorEl.innerText = "Email and password required"; errorEl.style.display = 'block'; return; }
+      const { error } = await supaClient.auth.signInWithPassword({ email, password });
+      if (error) { errorEl.innerText = error.message; errorEl.style.display = 'block'; }
+    });
+
+    document.getElementById('btnSignUp').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const errorEl = document.getElementById('authError');
+      errorEl.style.display = 'none';
+      if (!email || !password) { errorEl.innerText = "Email and password required"; errorEl.style.display = 'block'; return; }
+      const { error } = await supaClient.auth.signUp({ email, password });
+      if (error) { errorEl.innerText = error.message; errorEl.style.display = 'block'; }
+      else { alert('Sign up successful! Please sign in.'); }
+    });
 
     const state = {
       habits: [],
@@ -1990,13 +2045,13 @@
       const { data: habitsData } = await supaClient
         .from('habits')
         .select('*')
-        .eq('user_id', currentUser);
+        .eq('user_id', currentUser.id);
 
       // Fetch completions
       const { data: completionsData } = await supaClient
         .from('completions')
         .select('*')
-        .eq('user_id', currentUser);
+        .eq('user_id', currentUser.id);
 
       const habits = habitsData || [];
       const data = {};
@@ -2067,14 +2122,14 @@
       await supaClient.from('completions')
         .delete()
         .eq('habit_id', hid)
-        .eq('user_id', currentUser)
+        .eq('user_id', currentUser.id)
         .eq('completed_on', dateStr);
         
       // If checked, insert a new record
       if (v) {
         await supaClient.from('completions').insert({ 
           habit_id: hid, 
-          user_id: currentUser, 
+          user_id: currentUser.id, 
           completed_on: dateStr 
         });
       }
@@ -2625,10 +2680,10 @@
       }
 
       try {
-        console.log('Adding habit to Supabase:', { name, category, user_id: currentUser });
+        console.log('Adding habit to Supabase:', { name, category, user_id: currentUser.id });
         const { data, error } = await supaClient
           .from('habits')
-          .insert({ name, category, user_id: currentUser })
+          .insert({ name, category, user_id: currentUser.id })
           .select('id, name, category')
           .single();
 
@@ -2935,7 +2990,6 @@ ${buildHabitSummary()}`;
       checkAchievements();
     }
 
-    init();
   </script>
 </body>
 
