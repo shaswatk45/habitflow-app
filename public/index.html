@@ -1839,8 +1839,8 @@
 
   <script>
 
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_KEY = "YOUR_ANON_KEY";
+    const SUPABASE_URL = "https://tbriupljhrrnmzrnrlgi.supabase.co";
+    const SUPABASE_KEY = "YOUR_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicml1cGxqaHJybm16cm5ybGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTUzNTIsImV4cCI6MjA4OTMzMTM1Mn0.DGcGBRkz_ACKXmPREq5lh42WXdZbYe75O0AbFuTpN-UANON_KEY";
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     // ══════════════════════════════════════════════════════════════════════════════
@@ -1975,13 +1975,13 @@
         unlockedAch: [],
         aiHistory: []
       };
-    }}
-    function saveState() { localStorage.setItem('hf_v3', JSON.stringify(state)); }
+    }
 
-    let state = {};
+    const state = {};
 
     async function init() {
-      state = await loadState();
+      const loaded = await loadState();
+      Object.assign(state, loaded);
       renderAll();
     }
 
