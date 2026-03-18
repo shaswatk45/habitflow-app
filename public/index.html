@@ -699,6 +699,17 @@
       margin: 2px auto 0;
     }
 
+    .habit-note-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      border: 1px solid var(--surface);
+    }
+
     /* ══ CARDS ═══════════════════════════════════════════════════════════════════ */
     .metrics-grid {
       display: grid;
@@ -1983,6 +1994,19 @@
     </div>
   </div>
 
+  <!-- HABIT NOTE MODAL -->
+  <div class="modal-backdrop" id="habitNoteModal">
+    <div class="modal">
+      <button class="modal-close" id="habitNoteModalClose">✕</button>
+      <div class="modal-title" id="habitNoteModalTitle">Habit Note</div>
+      <textarea class="modal-input" id="habitNoteTextarea" placeholder="Write a reflection or detail about this check-in…"></textarea>
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="habitNoteModalDelete" style="margin-right:auto;">Clear</button>
+        <button class="btn btn-primary" id="habitNoteModalSave">Save Note</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ACHIEVEMENT TOAST -->
   <div class="toast" id="toast"></div>
 
@@ -2050,6 +2074,7 @@
     const state = {
       habits: [],
       data: {},
+      habitNotes: {},
       notes: {},
       streaks: {},
       bestStreaks: {},
@@ -2181,12 +2206,14 @@
 
       const habits = habitsData || [];
       const data = {};
+      const habitNotes = {};
 
       // Convert completions → your old format
       completionsData?.forEach(c => {
         const date = new Date(c.completed_on);
         const key = `${c.habit_id}_${date.getFullYear()}_${date.getMonth()}_${date.getDate()}`;
         data[key] = true;
+        if (c.note) habitNotes[key] = c.note;
       });
 
       return {
@@ -2197,14 +2224,7 @@
           target_days: h.target_days || [0, 1, 2, 3, 4, 5, 6]
         })),
         data,
-        notes: {},
-        streaks: {},
-        bestStreaks: {},
-        viewYear: new Date().getFullYear(),
-        viewMonth: new Date().getMonth(),
-        xp: 0,
-        unlockedAch: [],
-        aiHistory: []
+        habitNotes
       };
     }
 
@@ -2237,8 +2257,16 @@
 
     function isChecked(hid, d) { return !!state.data[gk(hid, d)]; }
     
-    async function setChecked(hid, d, v) { 
-      state.data[gk(hid, d)] = v; 
+    async function setChecked(hid, d, v, noteStr = null) { 
+      const k = gk(hid, d);
+      state.data[k] = v; 
+      
+      if (noteStr !== null) {
+        if (noteStr) state.habitNotes[k] = noteStr;
+        else delete state.habitNotes[k];
+      }
+      const currentNote = state.habitNotes[k] || null;
+
       recalcStreaks(hid); 
       saveState(); 
 
@@ -2257,7 +2285,8 @@
         await supaClient.from('completions').insert({ 
           habit_id: hid, 
           user_id: currentUser.id, 
-          completed_on: dateStr 
+          completed_on: dateStr,
+          note: currentNote
         });
       }
     }
@@ -2464,16 +2493,21 @@
 
           const dow = new Date(state.viewYear, state.viewMonth, d).getDay();
           const scheduled = habit.target_days ? habit.target_days.includes(dow) : true;
+          
+          const hasHabitNote = !!state.habitNotes[gk(habit.id, d)];
+          const ttip = hasHabitNote ? `title="Note: ${state.habitNotes[gk(habit.id, d)].replace(/"/g, '&quot;')}"` : '';
 
           if (scheduled) {
-            html += `<td class="td-day${we ? ' weekend' : ''}">
-          <button class="check-btn${checked ? ' checked' : ''}" data-h="${habit.id}" data-d="${d}"></button>
-          ${hasNote ? '<div class="note-dot" title="Has note"></div>' : ''}
+            html += `<td class="td-day${we ? ' weekend' : ''}" ${ttip}>
+          <button class="check-btn${checked ? ' checked' : ''}" data-h="${habit.id}" data-d="${d}" title="Right-click/Long-press checkbox to add note"></button>
+          ${hasNote ? '<div class="note-dot" title="Has daily note"></div>' : ''}
+          ${hasHabitNote ? '<div class="habit-note-dot"></div>' : ''}
         </td>`;
           } else {
-            html += `<td class="td-day off-day${we ? ' weekend' : ''}">
-          <div class="check-btn"></div>
-          ${hasNote ? '<div class="note-dot" title="Has note"></div>' : ''}
+            html += `<td class="td-day off-day${we ? ' weekend' : ''}" ${ttip}>
+          <div class="check-btn" title="Right-click/Long-press checkbox to add note" data-h="${habit.id}" data-d="${d}"></div>
+          ${hasNote ? '<div class="note-dot" title="Has daily note"></div>' : ''}
+          ${hasHabitNote ? '<div class="habit-note-dot"></div>' : ''}
         </td>`;
           }
         }
@@ -2531,12 +2565,24 @@
         });
       });
 
-      // Right-click for notes
+      // Right-click for daily notes
       document.querySelectorAll('.td-day').forEach(td => {
         td.addEventListener('contextmenu', e => {
           e.preventDefault();
           const btn = td.querySelector('.check-btn');
-          if (btn) openNoteModal(+btn.dataset.d);
+          if (btn && !e.target.classList.contains('check-btn')) {
+             openNoteModal(+btn.dataset.d);
+          }
+        });
+      });
+
+      // Right-click check button for habit notes
+      document.querySelectorAll('.check-btn').forEach(btn => {
+        btn.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const hid = btn.dataset.h, d = +btn.dataset.d;
+          if (hid && d) openHabitNoteModal(hid, d);
         });
       });
 
@@ -2846,6 +2892,41 @@
         saveState(); renderTrackerBody(); renderHeatmap();
       }
       closeNoteModal();
+    });
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // HABIT NOTES (PER COMPLETION)
+    // ══════════════════════════════════════════════════════════════════════════════
+    let habitNoteTarget = null;
+    function openHabitNoteModal(hid, d) {
+      habitNoteTarget = { hid, d };
+      const h = state.habits.find(x => x.id === hid);
+      document.getElementById('habitNoteModalTitle').textContent = `Note for ${h.name} on ${d}`;
+      document.getElementById('habitNoteTextarea').value = state.habitNotes[gk(hid, d)] || '';
+      document.getElementById('habitNoteModal').classList.add('open');
+      setTimeout(() => document.getElementById('habitNoteTextarea').focus(), 50);
+    }
+    function closeHabitNoteModal() { document.getElementById('habitNoteModal').classList.remove('open'); habitNoteTarget = null; }
+    document.getElementById('habitNoteModalClose').addEventListener('click', closeHabitNoteModal);
+    document.getElementById('habitNoteModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeHabitNoteModal(); });
+    
+    document.getElementById('habitNoteModalDelete').addEventListener('click', () => {
+      if (habitNoteTarget) {
+        const { hid, d } = habitNoteTarget;
+        setChecked(hid, d, state.data[gk(hid, d)] || false, ''); 
+        renderTrackerBody();
+      }
+      closeHabitNoteModal();
+    });
+
+    document.getElementById('habitNoteModalSave').addEventListener('click', () => {
+      if (habitNoteTarget) {
+        const { hid, d } = habitNoteTarget;
+        const v = document.getElementById('habitNoteTextarea').value.trim();
+        setChecked(hid, d, true, v); 
+        renderTrackerBody();
+      }
+      closeHabitNoteModal();
     });
 
     // ══════════════════════════════════════════════════════════════════════════════
