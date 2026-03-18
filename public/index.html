@@ -1883,7 +1883,7 @@
     }
 
     // Auth flows
-    supaClient.auth.onAuthStateChange(async (event, session) => {
+    supaClient.auth.onAuthStateChange((event, session) => {
       console.log('Auth state change:', event, session);
       if (session) {
         currentUser = session.user;
@@ -1891,8 +1891,10 @@
         document.getElementById('mainApp').style.display = 'block';
         if (userDisplay) userDisplay.innerText = `👤 ${currentUser.email} (Sign Out)`;
         
-        // Load data on login
-        await init();
+        // Load data on initial page load or login, avoid await to prevent auth mutex deadlock
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          setTimeout(() => init(), 0);
+        }
       } else {
         currentUser = null;
         document.getElementById('mainApp').style.display = 'none';
