@@ -2220,10 +2220,21 @@
       if (!state.aiHistory) state.aiHistory = [];
       
       renderAll();
+
+      // Auto-scroll tracker horizontally to center on today
+      setTimeout(() => {
+        if (vc()) {
+          const todayTh = document.querySelector('.th-today');
+          const wrap = document.querySelector('.tracker-outer');
+          if (todayTh && wrap) {
+             wrap.scrollLeft = Math.max(0, todayTh.offsetLeft - 150);
+          }
+        }
+      }, 50);
     }
 
     let activeFilter = 'all';
-    let activeWeek = 0;  // 0=all on desktop, 0-3 on mobile
+    let activeWeek = Math.floor((new Date().getDate() - 1) / 7);  // 0-3 on mobile based on current day
     let noteTarget = null;
     let dragSrcIdx = null;
 
