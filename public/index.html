@@ -2220,21 +2220,10 @@
       if (!state.aiHistory) state.aiHistory = [];
       
       renderAll();
-
-      // Auto-scroll tracker horizontally to center on today
-      setTimeout(() => {
-        if (vc()) {
-          const todayTh = document.querySelector('.th-today');
-          const wrap = document.querySelector('.tracker-outer');
-          if (todayTh && wrap) {
-             wrap.scrollLeft = Math.max(0, todayTh.offsetLeft - 150);
-          }
-        }
-      }, 50);
     }
 
     let activeFilter = 'all';
-    let activeWeek = Math.floor((new Date().getDate() - 1) / 7);  // 0-3 on mobile based on current day
+    let activeWeek = 0;  // Dynamically mapped based on getWeekRange()
     let noteTarget = null;
     let dragSrcIdx = null;
 
@@ -2397,9 +2386,11 @@
     // ══════════════════════════════════════════════════════════════════════════════
     function getWeekRange() {
       const isMobile = window.innerWidth <= 700;
-      if (!isMobile) return { start: 1, end: vd() };
-      const starts = [1, 8, 15, 22];
-      const s = starts[activeWeek] || 1;
+      const startDay = vc() ? TODAY_DAY : 1;
+      if (!isMobile) return { start: startDay, end: vd() };
+      
+      const starts = [startDay, startDay + 7, startDay + 14, startDay + 21, startDay + 28];
+      const s = starts[activeWeek] || startDay;
       const e = Math.min(vd(), s + 6);
       return { start: s, end: e };
     }
@@ -2412,9 +2403,18 @@
       const days = vd(), isMobile = window.innerWidth <= 700;
       el.style.display = isMobile ? 'flex' : 'none';
       if (!isMobile) return;
-      const labels = ['Week 1 (1–7)', 'Week 2 (8–14)', 'Week 3 (15–21)', 'Week 4 (22–' + days + ')'];
-      const numWeeks = Math.ceil(days / 7);
-      el.innerHTML = labels.slice(0, numWeeks).map((l, i) =>
+      
+      const startDay = vc() ? TODAY_DAY : 1;
+      const numWeeks = Math.ceil((days - startDay + 1) / 7);
+      
+      const labels = [];
+      for (let i = 0; i < numWeeks; i++) {
+        const s = startDay + (i * 7);
+        const e = Math.min(days, s + 6);
+        labels.push(`Week ${i+1} (${s}–${e})`);
+      }
+      
+      el.innerHTML = labels.map((l, i) =>
         `<button class="week-tab${i === activeWeek ? ' active' : ''}" data-week="${i}">${l}</button>`
       ).join('');
     }
