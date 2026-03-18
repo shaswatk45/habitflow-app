@@ -200,13 +200,32 @@
     }
 
     /* ══ NAV ═════════════════════════════════════════════════════════════════════ */
+  @property --pos-x { syntax: '<percentage>'; initial-value: 11.14%; inherits: false; }
+  @property --pos-y { syntax: '<percentage>'; initial-value: 140%; inherits: false; }
+  @property --spread-x { syntax: '<percentage>'; initial-value: 150%; inherits: false; }
+  @property --spread-y { syntax: '<percentage>'; initial-value: 180.06%; inherits: false; }
+  @property --color-1 { syntax: '<color>'; initial-value: #000; inherits: false; }
+  @property --color-2 { syntax: '<color>'; initial-value: #1B4332; inherits: false; }
+  @property --color-3 { syntax: '<color>'; initial-value: #2D6A4F; inherits: false; }
+  @property --color-4 { syntax: '<color>'; initial-value: #40916C; inherits: false; }
+  @property --color-5 { syntax: '<color>'; initial-value: #52B788; inherits: false; }
+  @property --border-angle { syntax: '<angle>'; initial-value: 20deg; inherits: true; }
+  @property --border-color-1 { syntax: '<color>'; initial-value: hsla(150, 75%, 60%, 0.2); inherits: true; }
+  @property --border-color-2 { syntax: '<color>'; initial-value: hsla(150, 75%, 40%, 0.75); inherits: true; }
+  @property --stop-1 { syntax: '<percentage>'; initial-value: 37.35%; inherits: false; }
+  @property --stop-2 { syntax: '<percentage>'; initial-value: 61.36%; inherits: false; }
+  @property --stop-3 { syntax: '<percentage>'; initial-value: 78.42%; inherits: false; }
+  @property --stop-4 { syntax: '<percentage>'; initial-value: 89.52%; inherits: false; }
+  @property --stop-5 { syntax: '<percentage>'; initial-value: 100%; inherits: false; }
+
     .nav {
       display: flex;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
+      padding: 12px 24px;
       overflow-x: auto;
       scrollbar-width: none;
+      gap: 12px;
     }
 
     .nav::-webkit-scrollbar {
@@ -214,22 +233,56 @@
     }
 
     .nav-btn {
-      padding: 14px 20px;
+      padding: 12px 20px;
       border: none;
       background: none;
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text2);
       cursor: pointer;
-      border-bottom: 2px solid transparent;
       white-space: nowrap;
-      transition: color .2s, border-color .2s;
+      border-radius: 11px;
+      transition: color .2s;
     }
 
-    .nav-btn.active {
-      color: var(--accent);
-      border-color: var(--accent);
+    .gradient-nav-btn.active, .gradient-nav-btn:hover {
+      position: relative;
+      appearance: none;
+      cursor: pointer;
+      background: radial-gradient(
+        var(--spread-x) var(--spread-y) at var(--pos-x) var(--pos-y),
+        var(--color-1) var(--stop-1),
+        var(--color-2) var(--stop-2),
+        var(--color-3) var(--stop-3),
+        var(--color-4) var(--stop-4),
+        var(--color-5) var(--stop-5)
+      );
+      transition:
+        --pos-x 0.5s, --pos-y 0.5s, --spread-x 0.5s, --spread-y 0.5s,
+        --color-1 0.5s, --color-2 0.5s, --color-3 0.5s, --color-4 0.5s, --color-5 0.5s,
+        --border-angle 0.5s, --border-color-1 0.5s, --border-color-2 0.5s,
+        --stop-1 0.5s, --stop-2 0.5s, --stop-3 0.5s, --stop-4 0.5s, --stop-5 0.5s, color 0.2s;
+      color: #fff;
+    }
+    .gradient-nav-btn.active::before, .gradient-nav-btn:hover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(var(--border-angle), var(--border-color-1), var(--border-color-2));
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      pointer-events: none;
+    }
+    .gradient-nav-btn.active, .gradient-nav-btn:hover {
+      --pos-x: 0%; --pos-y: 91.51%; --spread-x: 120.24%; --spread-y: 103.18%;
+      --color-1: #52B788; --color-2: #40916C; --color-3: #2D6A4F; --color-4: #1B4332; --color-5: #000;
+      --border-angle: 190deg; --border-color-1: hsla(150, 78%, 90%, 0.1); --border-color-2: hsla(150, 75%, 90%, 0.6);
+      --stop-1: 0%; --stop-2: 8.8%; --stop-3: 21.44%; --stop-4: 71.34%; --stop-5: 85.76%;
     }
 
     /* ══ LAYOUT ══════════════════════════════════════════════════════════════════ */
@@ -1531,6 +1584,55 @@
         grid-template-columns: repeat(7, 1fr) !important;
       }
     }
+
+    .day-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .day-toggle input {
+      display: none;
+    }
+    .day-toggle span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text3);
+      font-size: 13px;
+      font-weight: 600;
+      transition: all .2s;
+    }
+    .day-toggle input:checked + span {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .td-day.off-day {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .off-day .check-btn {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      cursor: default;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .off-day .check-btn::after {
+      content: '—';
+      display: block;
+      color: var(--text3);
+      font-size: 14px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -1594,11 +1696,11 @@
 
   <!-- NAV -->
   <nav class="nav">
-    <button class="nav-btn active" data-tab="tracker">📅 Tracker</button>
-    <button class="nav-btn" data-tab="dashboard">📊 Dashboard</button>
-    <button class="nav-btn" data-tab="analytics">🔍 Analytics</button>
-    <button class="nav-btn" data-tab="coach">🤖 AI Coach</button>
-    <button class="nav-btn" data-tab="settings">⚙️ Settings</button>
+    <button class="nav-btn gradient-nav-btn active" data-tab="tracker">📅 Tracker</button>
+    <button class="nav-btn gradient-nav-btn" data-tab="dashboard">📊 Dashboard</button>
+    <button class="nav-btn gradient-nav-btn" data-tab="analytics">🔍 Analytics</button>
+    <button class="nav-btn gradient-nav-btn" data-tab="coach">🤖 AI Coach</button>
+    <button class="nav-btn gradient-nav-btn" data-tab="settings">⚙️ Settings</button>
   </nav>
 
   <!-- ══ TRACKER TAB ══════════════════════════════════════════════════════════ -->
@@ -1856,6 +1958,24 @@
         <option value="Productivity">🔵 Productivity</option>
         <option value="Lifestyle">🟠 Lifestyle</option>
       </select>
+      
+      <div class="frequency-section" style="margin-top:12px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">Frequency</div>
+        <select class="modal-input" id="newHabitFreqType" onchange="document.getElementById('specificDaysSelector').style.display = this.value === 'specific' ? 'flex' : 'none'">
+          <option value="everyday">Every day</option>
+          <option value="specific">Specific days</option>
+        </select>
+        <div id="specificDaysSelector" style="display:none; gap:6px; margin-top:8px; justify-content:space-between">
+          <label class="day-toggle"><input type="checkbox" value="0" checked><span>S</span></label>
+          <label class="day-toggle"><input type="checkbox" value="1" checked><span>M</span></label>
+          <label class="day-toggle"><input type="checkbox" value="2" checked><span>T</span></label>
+          <label class="day-toggle"><input type="checkbox" value="3" checked><span>W</span></label>
+          <label class="day-toggle"><input type="checkbox" value="4" checked><span>T</span></label>
+          <label class="day-toggle"><input type="checkbox" value="5" checked><span>F</span></label>
+          <label class="day-toggle"><input type="checkbox" value="6" checked><span>S</span></label>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button class="btn btn-ghost" id="addModalCancel">Cancel</button>
         <button class="btn btn-primary" id="addModalSave">Add Habit</button>
@@ -2073,7 +2193,8 @@
         habits: habits.map(h => ({
           id: h.id,
           name: h.name,
-          cat: h.category
+          cat: h.category,
+          target_days: h.target_days || [0, 1, 2, 3, 4, 5, 6]
         })),
         data,
         notes: {},
@@ -2142,21 +2263,55 @@
     }
 
     function recalcStreaks(hid) {
+      const h = state.habits.find(x => x.id === hid);
+      const isScheduled = (d) => h && h.target_days ? h.target_days.includes(new Date(state.viewYear, state.viewMonth, d).getDay()) : true;
+      
       const days = [];
-      for (let d = 1; d <= vd(); d++) days.push(isChecked(hid, d));
+      for (let d = 1; d <= vd(); d++) {
+        if (isScheduled(d)) days.push(isChecked(hid, d));
+        else days.push(null);
+      }
+      
       let run = 0, best = 0;
-      days.forEach(v => { if (v) { run++; if (run > best) best = run; } else run = 0; });
+      days.forEach(v => { 
+        if (v === true) { run++; if (run > best) best = run; } 
+        else if (v === false) run = 0; 
+      });
+      
       const last = vc() ? TODAY_DAY : vd();
       let cur = 0;
-      for (let i = last - 1; i >= 0; i--) { if (days[i]) cur++; else break; }
+      for (let i = last - 1; i >= 0; i--) { 
+        if (days[i] === true) cur++; 
+        else if (days[i] === false) break; 
+      }
+      
       state.streaks[hid] = cur;
       state.bestStreaks[hid] = Math.max(best, state.bestStreaks[hid] || 0);
     }
     function recalcAll() { state.habits.forEach(h => recalcStreaks(h.id)); }
 
+    function getPossibleDaysForHabit(habit, dRange) {
+      if (!habit.target_days || habit.target_days.length === 7) return dRange;
+      let count = 0;
+      for (let d = 1; d <= dRange; d++) {
+        if (habit.target_days.includes(new Date(state.viewYear, state.viewMonth, d).getDay())) count++;
+      }
+      return count;
+    }
+
     function getCompletion(hid) {
+      const h = state.habits.find(x => x.id === hid);
       let c = 0; for (let d = 1; d <= vd(); d++) if (isChecked(hid, d)) c++;
-      return { count: c, pct: Math.round(c / vd() * 100) };
+      const poss = h ? getPossibleDaysForHabit(h, vd()) : vd();
+      return { count: c, pct: poss ? Math.round(c / poss * 100) : 0, poss };
+    }
+    function getScheduledHabitsCount(d) {
+      let count = 0;
+      const dow = new Date(state.viewYear, state.viewMonth, d).getDay();
+      state.habits.forEach(h => {
+        if (!h.target_days || h.target_days.includes(dow)) count++;
+      });
+      return count;
     }
     function getTodayCount() {
       const d = vc() ? TODAY_DAY : vd();
@@ -2164,8 +2319,11 @@
     }
     function getDayCount(d) { return state.habits.filter(h => isChecked(h.id, d)).length; }
     function getConsistencyScore() {
-      let t = 0, p = state.habits.length * vd();
-      for (let d = 1; d <= vd(); d++) state.habits.forEach(h => { if (isChecked(h.id, d)) t++; });
+      let t = 0, p = 0;
+      state.habits.forEach(h => { 
+        p += getPossibleDaysForHabit(h, vd());
+        for (let d = 1; d <= vd(); d++) if (isChecked(h.id, d)) t++; 
+      });
       return p ? Math.round(t / p * 100) : 0;
     }
     function getBestHabit() {
@@ -2195,8 +2353,11 @@
     // Predicted month-end score
     function getPrediction() {
       const daysElapsed = vc() ? TODAY_DAY : vd();
-      let done = 0, poss = state.habits.length * daysElapsed;
-      for (let d = 1; d <= daysElapsed; d++) state.habits.forEach(h => { if (isChecked(h.id, d)) done++; });
+      let done = 0, poss = 0;
+      state.habits.forEach(h => { 
+        poss += getPossibleDaysForHabit(h, daysElapsed);
+        for (let d = 1; d <= daysElapsed; d++) { if (isChecked(h.id, d)) done++; } 
+      });
       const rate = poss ? done / poss : 0;
       return Math.round(rate * 100);
     }
@@ -2289,13 +2450,24 @@
           const we = isWeekend(d);
           const checked = isChecked(habit.id, d);
           const hasNote = !!state.notes[nk(d)];
-          html += `<td class="td-day${we ? ' weekend' : ''}">
-        <button class="check-btn${checked ? ' checked' : ''}" data-h="${habit.id}" data-d="${d}"></button>
-        ${hasNote ? '<div class="note-dot" title="Has note"></div>' : ''}
-      </td>`;
+
+          const dow = new Date(state.viewYear, state.viewMonth, d).getDay();
+          const scheduled = habit.target_days ? habit.target_days.includes(dow) : true;
+
+          if (scheduled) {
+            html += `<td class="td-day${we ? ' weekend' : ''}">
+          <button class="check-btn${checked ? ' checked' : ''}" data-h="${habit.id}" data-d="${d}"></button>
+          ${hasNote ? '<div class="note-dot" title="Has note"></div>' : ''}
+        </td>`;
+          } else {
+            html += `<td class="td-day off-day${we ? ' weekend' : ''}">
+          <div class="check-btn"></div>
+          ${hasNote ? '<div class="note-dot" title="Has note"></div>' : ''}
+        </td>`;
+          }
         }
 
-        html += `<td class="td-summary"><div class="pct-text">${pct}%</div><div class="count-text">${count}/${vd()}</div></td>
+        html += `<td class="td-summary"><div class="pct-text">${pct}%</div><div class="count-text">${count}/${getPossibleDaysForHabit(habit, vd())}</div></td>
       <td class="td-summary"><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div></td>
     </tr>`;
       });
@@ -2391,7 +2563,9 @@
     // RENDER DASHBOARD
     // ══════════════════════════════════════════════════════════════════════════════
     function renderDashboard() {
-      const score = getConsistencyScore(), tc = getTodayCount(), total = state.habits.length;
+      const score = getConsistencyScore();
+      const tc = getTodayCount();
+      const total = getScheduledHabitsCount(vc() ? TODAY_DAY : vd());
       const best = getBestHabit(), weak = getWeakestHabit(), top = getTopStreakHabit();
       const pred = getPrediction();
 
@@ -2630,7 +2804,7 @@
     // HERO
     // ══════════════════════════════════════════════════════════════════════════════
     function updateHero() {
-      const tc = getTodayCount(), total = state.habits.length;
+      const tc = getTodayCount(), total = getScheduledHabitsCount(vc() ? TODAY_DAY : vd());
       document.getElementById('heroToday').textContent = `${tc}/${total}`;
       document.getElementById('heroScore').textContent = getConsistencyScore() + '%';
       const top = getTopStreakHabit();
@@ -2666,7 +2840,15 @@
     // ══════════════════════════════════════════════════════════════════════════════
     // ADD HABIT
     // ══════════════════════════════════════════════════════════════════════════════
-    function openAddModal() { document.getElementById('newHabitName').value = ''; document.getElementById('addModal').classList.add('open'); setTimeout(() => document.getElementById('newHabitName').focus(), 50); }
+    function openAddModal() { 
+      document.getElementById('newHabitName').value = ''; 
+      document.getElementById('newHabitCat').value = 'Health';
+      document.getElementById('newHabitFreqType').value = 'everyday';
+      document.getElementById('specificDaysSelector').style.display = 'none';
+      document.querySelectorAll('#specificDaysSelector input').forEach(cb => cb.checked = true);
+      document.getElementById('addModal').classList.add('open'); 
+      setTimeout(() => document.getElementById('newHabitName').focus(), 50); 
+    }
     function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
     document.getElementById('addModalClose').addEventListener('click', closeAddModal);
     document.getElementById('addModalCancel').addEventListener('click', closeAddModal);
@@ -2676,21 +2858,33 @@
     async function addHabit() {
       const nameEl = document.getElementById('newHabitName');
       const catEl = document.getElementById('newHabitCat');
+      const freqType = document.getElementById('newHabitFreqType').value;
 
       const name = nameEl.value.trim();
       const category = catEl.value.trim();
+
+      let target_days = [0, 1, 2, 3, 4, 5, 6];
+      if (freqType === 'specific') {
+        const checkboxes = document.querySelectorAll('#specificDaysSelector input:checked');
+        target_days = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      }
 
       if (!name) {
         nameEl.focus();
         return;
       }
 
+      if (freqType === 'specific' && target_days.length === 0) {
+        showToast('Please select at least one day!', 'gold');
+        return;
+      }
+
       try {
-        console.log('Adding habit to Supabase:', { name, category, user_id: currentUser.id });
+        console.log('Adding habit to Supabase:', { name, category, target_days, user_id: currentUser.id });
         const { data, error } = await supaClient
           .from('habits')
-          .insert({ name, category, user_id: currentUser.id })
-          .select('id, name, category')
+          .insert({ name, category, target_days, user_id: currentUser.id })
+          .select('id, name, category, target_days')
           .single();
 
         if (error) {
@@ -2704,6 +2898,7 @@
           id: data.id,
           name: data.name,
           cat: data.category,
+          target_days: data.target_days || target_days
         });
 
         recalcStreaks(data.id);
@@ -2790,7 +2985,17 @@
         sel.addEventListener('change', () => { const h = state.habits.find(x => x.id === sel.dataset.id); if (h) { h.cat = sel.value; saveState(); renderTracker(); } });
       });
       list.querySelectorAll('[data-del]').forEach(btn => {
-        btn.addEventListener('click', () => { if (confirm('Delete this habit?')) { state.habits = state.habits.filter(h => h.id !== btn.dataset.del); saveState(); renderAll(); } });
+        btn.addEventListener('click', async () => { 
+          if (confirm('Delete this habit?')) { 
+            const hid = btn.dataset.del;
+            state.habits = state.habits.filter(h => h.id !== hid); 
+            delete state.streaks[hid];
+            delete state.bestStreaks[hid];
+            saveState(); 
+            renderAll(); 
+            try { await supaClient.from('habits').delete().eq('id', hid).eq('user_id', currentUser.id); } catch(e) {}
+          } 
+        });
       });
     }
 
@@ -2960,9 +3165,16 @@ ${buildHabitSummary()}`;
     ['exportCsvBtn', 'exportCsvBtn2'].forEach(id => document.getElementById(id)?.addEventListener('click', exportCSV));
     ['exportPdfBtn', 'exportPdfBtn2'].forEach(id => document.getElementById(id)?.addEventListener('click', exportPDF));
 
-    document.getElementById('clearDataBtn').addEventListener('click', () => {
+    document.getElementById('clearDataBtn').addEventListener('click', async () => {
       if (confirm('This will delete ALL habit data. Are you sure?')) {
-        localStorage.removeItem('hf_v3'); state = loadState(); renderAll();
+        localStorage.removeItem('hf_v3'); 
+        try {
+            await supaClient.from('completions').delete().eq('user_id', currentUser.id);
+            await supaClient.from('habits').delete().eq('user_id', currentUser.id);
+        } catch(e) {}
+        state = await loadState(); 
+        renderAll();
+        showToast('All your data has been cleared.', 'green');
       }
     });
     document.getElementById('resetXpBtn').addEventListener('click', () => {
