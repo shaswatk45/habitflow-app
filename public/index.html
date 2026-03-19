@@ -2037,6 +2037,7 @@
     
     // Global State
     let currentUser = null;
+    let editHabitId = null;
     
     // UI for switching user
     const userDisplay = document.getElementById('userDisplay');
@@ -2492,6 +2493,7 @@
         <div class="habit-name-row">
           <span class="drag-handle">⠿</span>
           <span class="habit-name">${habit.name}</span>
+          <button class="btn btn-ghost btn-sm" onclick="openEditModal('${habit.id}')" style="padding:2px 5px; font-size:10px; border:none; background:transparent;" title="Rename Habit">✏️</button>
           <span class="cat-badge" style="background:${cc.bg};color:${cc.text};">${habit.cat}</span>
         </div>
         <div class="habit-meta">
@@ -2949,6 +2951,9 @@
     // ADD HABIT
     // ══════════════════════════════════════════════════════════════════════════════
     function openAddModal() { 
+      editHabitId = null;
+      document.querySelector('#addModal .modal-title').textContent = 'Add New Habit';
+      document.getElementById('addModalSave').textContent = 'Add Habit';
       document.getElementById('newHabitName').value = ''; 
       document.getElementById('newHabitCat').value = 'Health';
       document.getElementById('newHabitFreqType').value = 'everyday';
@@ -2957,12 +2962,73 @@
       document.getElementById('addModal').classList.add('open'); 
       setTimeout(() => document.getElementById('newHabitName').focus(), 50); 
     }
-    function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+    function openEditModal(hid) {
+      editHabitId = hid;
+      const h = state.habits.find(x => x.id === hid);
+      if (!h) return;
+      document.querySelector('#addModal .modal-title').textContent = 'Edit Habit';
+      document.getElementById('addModalSave').textContent = 'Save Changes';
+      document.getElementById('newHabitName').value = h.name; 
+      document.getElementById('newHabitCat').value = h.cat;
+      const isSpecific = h.target_days && h.target_days.length < 7;
+      document.getElementById('newHabitFreqType').value = isSpecific ? 'specific' : 'everyday';
+      document.getElementById('specificDaysSelector').style.display = isSpecific ? 'flex' : 'none';
+      document.querySelectorAll('#specificDaysSelector input').forEach(cb => {
+        cb.checked = h.target_days ? h.target_days.includes(parseInt(cb.value)) : true;
+      });
+      document.getElementById('addModal').classList.add('open'); 
+      setTimeout(() => document.getElementById('newHabitName').focus(), 50); 
+    }
+    function closeAddModal() { document.getElementById('addModal').classList.remove('open'); editHabitId = null; }
     document.getElementById('addModalClose').addEventListener('click', closeAddModal);
     document.getElementById('addModalCancel').addEventListener('click', closeAddModal);
     document.getElementById('addModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
-    document.getElementById('addModalSave').addEventListener('click', addHabit);
-    document.getElementById('newHabitName').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
+    document.getElementById('addModalSave').addEventListener('click', saveHabitAction);
+    document.getElementById('newHabitName').addEventListener('keydown', e => { if (e.key === 'Enter') saveHabitAction(); });
+
+    async function saveHabitAction() {
+      if (editHabitId) await updateHabit();
+      else await addHabit();
+    }
+
+    async function updateHabit() {
+      const nameEl = document.getElementById('newHabitName');
+      const catEl = document.getElementById('newHabitCat');
+      const freqType = document.getElementById('newHabitFreqType').value;
+      const name = nameEl.value.trim();
+      const category = catEl.value.trim();
+      let target_days = [0, 1, 2, 3, 4, 5, 6];
+      if (freqType === 'specific') {
+        const checkboxes = document.querySelectorAll('#specificDaysSelector input:checked');
+        target_days = Array.from(checkboxes).map(cb => parseInt(cb.value));
+      }
+      if (!name) { nameEl.focus(); return; }
+      if (freqType === 'specific' && target_days.length === 0) { showToast('Please select at least one day!', 'gold'); return; }
+
+      try {
+        const { error } = await supaClient
+          .from('habits')
+          .update({ name, category, target_days })
+          .eq('id', editHabitId)
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        const hIdx = state.habits.findIndex(x => x.id === editHabitId);
+        if (hIdx > -1) {
+          state.habits[hIdx].name = name;
+          state.habits[hIdx].cat = category;
+          state.habits[hIdx].target_days = target_days;
+        }
+
+        closeAddModal();
+        renderAll();
+        showToast('Habit updated!', 'green');
+      } catch (err) {
+        console.error('Failed to update habit:', err);
+        alert(err.message ?? 'Error saving habit');
+      }
+    }
     async function addHabit() {
       const nameEl = document.getElementById('newHabitName');
       const catEl = document.getElementById('newHabitCat');
@@ -3085,12 +3151,18 @@
         const opts = ['Health', 'Productivity', 'Lifestyle'].map(c => `<option${h.cat === c ? ' selected' : ''}>${c}</option>`).join('');
         return `<li class="habit-edit-item">
       <span class="habit-edit-name">${h.name}</span>
-      <select class="cat-select" data-id="${h.id}">${opts}</select>
-      <button class="btn btn-danger btn-sm" data-del="${h.id}">✕</button>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select class="cat-select" data-id="${h.id}">${opts}</select>
+        <button class="btn btn-ghost btn-sm" data-edit="${h.id}" title="Rename Habit">✏️</button>
+        <button class="btn btn-danger btn-sm" data-del="${h.id}">✕</button>
+      </div>
     </li>`;
       }).join('');
       list.querySelectorAll('.cat-select').forEach(sel => {
         sel.addEventListener('change', () => { const h = state.habits.find(x => x.id === sel.dataset.id); if (h) { h.cat = sel.value; saveState(); renderTracker(); } });
+      });
+      list.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(btn.dataset.edit));
       });
       list.querySelectorAll('[data-del]').forEach(btn => {
         btn.addEventListener('click', async () => { 
