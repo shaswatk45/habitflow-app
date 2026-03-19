@@ -432,13 +432,29 @@
     }
 
     @media(max-width:700px) {
-      .week-tabs {
-        display: flex;
-      }
+      .container { padding: 12px; }
+      .hero { padding: 20px 16px 16px; }
+      .hero-title { font-size: 19px; }
+      .hero-stats { gap: 10px; }
+      .hero-stat { padding: 8px 12px; min-width: 80px; }
+      .hero-stat-val { font-size: 18px; }
 
-      .tracker-controls .hide-mobile {
-        display: none;
-      }
+      .nav { padding: 8px 12px; gap: 8px; }
+      .nav-btn { padding: 8px 14px; font-size: 12px; border-radius: 8px; }
+
+      .week-tabs { display: flex; }
+      .tracker-controls .hide-mobile { display: none; }
+      
+      .th-habit, .td-habit { min-width: 140px; padding: 8px 12px; }
+      .habit-name { font-size: 13px; }
+      .cat-badge, .best-badge, .score-badge, .trend-label { display: none; }
+      .habit-meta { gap: 8px; }
+      
+      .metric-card { padding: 16px; }
+      .metric-val { font-size: 24px; }
+      .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+      
+      .chart-card { padding: 12px; }
     }
 
     .tracker-outer {
