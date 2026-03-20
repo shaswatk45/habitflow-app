@@ -2276,8 +2276,8 @@
       });
       
       // Overwrite completion data and notes with database truth
-      Object.assign(state.data, loaded.data);
-      Object.assign(state.habitNotes, loaded.habitNotes);
+      state.data = loaded.data;
+      state.habitNotes = loaded.habitNotes;
       
       // Ensure fields exist for older saved states
       if (!state.viewYear) state.viewYear = YEAR;
@@ -2327,21 +2327,29 @@
       // Sync with Supabase asynchronously
       const dateStr = formatDateLocal(state.viewYear, state.viewMonth, d);
       
-      // Always delete first to ensure no duplicates for this user/habit/date combo
-      await supaClient.from('completions')
-        .delete()
-        .eq('habit_id', hid)
-        .eq('user_id', currentUser.id)
-        .eq('completed_on', dateStr);
-        
-      // If checked, insert a new record
-      if (v) {
-        await supaClient.from('completions').insert({ 
-          habit_id: hid, 
-          user_id: currentUser.id, 
-          completed_on: dateStr,
-          note: currentNote
-        });
+      try {
+        // Always delete first to ensure no duplicates for this user/habit/date combo
+        const { error: delError } = await supaClient.from('completions')
+          .delete()
+          .eq('habit_id', hid)
+          .eq('user_id', currentUser.id)
+          .eq('completed_on', dateStr);
+          
+        if (delError) throw delError;
+
+        // If checked, insert a new record
+        if (v) {
+          const { error: insError } = await supaClient.from('completions').insert({ 
+            habit_id: hid, 
+            user_id: currentUser.id, 
+            completed_on: dateStr,
+            note: currentNote
+          });
+          if (insError) throw insError;
+        }
+      } catch (err) {
+        console.error('Sync error:', err);
+        showToast('Failed to sync with database. Please check your connection.', 'red');
       }
     }
 
@@ -3077,7 +3085,7 @@
         showToast('Habit updated!', 'green');
       } catch (err) {
         console.error('Failed to update habit:', err);
-        alert(err.message ?? 'Error saving habit');
+        showToast(err.message ?? 'Error saving habit', 'red');
       }
     }
     async function addHabit() {
@@ -3134,8 +3142,7 @@
         showToast('Habit added successfully!', 'green');
       } catch (err) {
         console.error('Failed to add habit:', err);
-        // swap alert() for a toast/inline error in production
-        alert(err.message ?? 'Error saving habit');
+        showToast(err.message ?? 'Error saving habit', 'red');
       }
     }
     document.getElementById('addHabitBtn').addEventListener('click', openAddModal);
@@ -3232,7 +3239,13 @@
             delete state.bestStreaks[hid];
             saveState(); 
             renderAll(); 
-            try { await supaClient.from('habits').delete().eq('id', hid).eq('user_id', currentUser.id); } catch(e) {}
+            try { 
+              const { error } = await supaClient.from('habits').delete().eq('id', hid).eq('user_id', currentUser.id); 
+              if (error) throw error;
+            } catch(e) {
+              console.error('Delete habit error:', e);
+              showToast('Failed to delete habit from database.', 'red');
+            }
           } 
         });
       });
