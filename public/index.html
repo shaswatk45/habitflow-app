@@ -2256,6 +2256,13 @@
       if (!state.unlockedAch) state.unlockedAch = [];
       if (!state.aiHistory) state.aiHistory = [];
       
+      // Default activeWeek to week containing TODAY_DAY if current month
+      if (vc()) {
+        activeWeek = Math.floor((TODAY_DAY - 1) / 7);
+      } else {
+        activeWeek = 0;
+      }
+      
       renderAll();
     }
 
@@ -2432,11 +2439,11 @@
     // ══════════════════════════════════════════════════════════════════════════════
     function getWeekRange() {
       const isMobile = window.innerWidth <= 700;
-      const startDay = vc() ? TODAY_DAY : 1;
+      const startDay = 1; // Always start from day 1
       if (!isMobile) return { start: startDay, end: vd() };
       
-      const starts = [startDay, startDay + 7, startDay + 14, startDay + 21, startDay + 28];
-      const s = starts[activeWeek] || startDay;
+      const starts = [1, 8, 15, 22, 29]; // Standard week starts
+      const s = starts[activeWeek] || 1;
       const e = Math.min(vd(), s + 6);
       return { start: s, end: e };
     }
@@ -2450,14 +2457,14 @@
       el.style.display = isMobile ? 'flex' : 'none';
       if (!isMobile) return;
       
-      const startDay = vc() ? TODAY_DAY : 1;
-      const numWeeks = Math.ceil((days - startDay + 1) / 7);
+      const startDay = 1; // Always start from day 1
+      const numWeeks = Math.ceil(days / 7);
       
       const labels = [];
       for (let i = 0; i < numWeeks; i++) {
         const s = startDay + (i * 7);
         const e = Math.min(days, s + 6);
-        labels.push(`Week ${i+1} (${s}–${e})`);
+        labels.push(`Wk ${i+1} (${s}–${e})`);
       }
       
       el.innerHTML = labels.map((l, i) =>
@@ -2632,7 +2639,21 @@
       });
     }
 
-    function renderTracker() { renderWeekTabs(); renderTrackerHead(); renderTrackerBody(); }
+    function renderTracker() { 
+      renderWeekTabs(); 
+      renderTrackerHead(); 
+      renderTrackerBody(); 
+      
+      // Auto-scroll to today on desktop
+      if (window.innerWidth > 700 && vc()) {
+        setTimeout(() => {
+          const todayCol = document.querySelector('.th-today');
+          if (todayCol) {
+            todayCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }, 100);
+      }
+    }
 
     // ══════════════════════════════════════════════════════════════════════════════
     // RENDER DASHBOARD
@@ -3097,6 +3118,14 @@
       state.viewMonth += delta;
       if (state.viewMonth > 11) { state.viewMonth = 0; state.viewYear++; }
       if (state.viewMonth < 0) { state.viewMonth = 11; state.viewYear--; }
+      
+      // Update activeWeek for the new month
+      if (vc()) {
+        activeWeek = Math.floor((TODAY_DAY - 1) / 7);
+      } else {
+        activeWeek = 0;
+      }
+      
       saveState(); recalcAll(); renderAll();
     }
     document.getElementById('prevMonthBtn').addEventListener('click', () => navigateMonth(-1));
