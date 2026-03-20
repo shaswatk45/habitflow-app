@@ -2197,6 +2197,14 @@
     }
     function getKeyFor(s, habitId, day) { return `${habitId}_${s.viewYear}_${s.viewMonth}_${day}`; }
 
+    function formatDateLocal(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    function parseDateLocal(str) {
+      const parts = str.split('-');
+      return { y: +parts[0], m: +parts[1] - 1, d: +parts[2] };
+    }
+
     // Default habits
     const DEFAULT_HABITS = [
       { id: 'h1', name: '🏃 Exercise', cat: 'Health' },
@@ -2227,8 +2235,8 @@
 
       // Convert completions → your old format
       completionsData?.forEach(c => {
-        const date = new Date(c.completed_on);
-        const key = `${c.habit_id}_${date.getFullYear()}_${date.getMonth()}_${date.getDate()}`;
+        const { y, m, d } = parseDateLocal(c.completed_on);
+        const key = `${c.habit_id}_${y}_${m}_${d}`;
         data[key] = true;
         if (c.note) habitNotes[key] = c.note;
       });
@@ -2246,8 +2254,30 @@
     }
 
     async function init() {
+      // 1. Load from localStorage first
+      const saved = localStorage.getItem('hf_v3');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          Object.assign(state, parsed);
+        } catch (e) {
+          console.error('Failed to parse localStorage:', e);
+        }
+      }
+
+      // 2. Fetch from Supabase and merge
       const loaded = await loadState();
-      Object.assign(state, loaded);
+      
+      // Merge habits carefully (avoid duplicates)
+      loaded.habits.forEach(lh => {
+        if (!state.habits.find(h => h.id === lh.id)) {
+          state.habits.push(lh);
+        }
+      });
+      
+      // Overwrite completion data and notes with database truth
+      Object.assign(state.data, loaded.data);
+      Object.assign(state.habitNotes, loaded.habitNotes);
       
       // Ensure fields exist for older saved states
       if (!state.viewYear) state.viewYear = YEAR;
@@ -2295,7 +2325,7 @@
       saveState(); 
 
       // Sync with Supabase asynchronously
-      const dateStr = new Date(state.viewYear, state.viewMonth, d).toISOString().split('T')[0];
+      const dateStr = formatDateLocal(state.viewYear, state.viewMonth, d);
       
       // Always delete first to ensure no duplicates for this user/habit/date combo
       await supaClient.from('completions')
