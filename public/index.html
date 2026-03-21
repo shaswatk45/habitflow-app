@@ -63,6 +63,35 @@
       --h0: #252220;
     }
 
+    /* ══ THEME COLORS ══════════════════════════════════════════════════════════ */
+    :root[data-theme-color="green"] {
+      --accent: #2D6A4F; --accent2: #52B788; --accent3: #D8F3DC;
+      --h1: #D8F3DC; --h2: #95D5B2; --h3: #52B788; --h4: #2D6A4F;
+    }
+    :root[data-theme-color="blue"] {
+      --accent: #1E40AF; --accent2: #3B82F6; --accent3: #DBEAFE;
+      --h1: #DBEAFE; --h2: #93C5FD; --h3: #3B82F6; --h4: #1E40AF;
+    }
+    :root[data-theme-color="grey"] {
+      --accent: #374151; --accent2: #6B7280; --accent3: #F3F4F6;
+      --h1: #F3F4F6; --h2: #D1D5DB; --h3: #6B7280; --h4: #374151;
+    }
+    :root[data-theme-color="red"] {
+      --accent: #B91C1C; --accent2: #EF4444; --accent3: #FEE2E2;
+      --h1: #FEE2E2; --h2: #FCA5A5; --h3: #EF4444; --h4: #B91C1C;
+    }
+    :root[data-theme-color="yellow"] {
+      --accent: #D97706; --accent2: #F59E0B; --accent3: #FEF3C7;
+      --h1: #FEF3C7; --h2: #FDE68A; --h3: #F59E0B; --h4: #D97706;
+    }
+
+    /* DARK MODE THEMES */
+    [data-theme="dark"][data-theme-color="green"] { --accent: #52B788; --accent2: #74C69D; --accent3: #1B4332; --h0: #1B4332; }
+    [data-theme="dark"][data-theme-color="blue"] { --accent: #3B82F6; --accent2: #60A5FA; --accent3: #1E3A8A; --h0: #1E3A8A; }
+    [data-theme="dark"][data-theme-color="grey"] { --accent: #9CA3AF; --accent2: #D1D5DB; --accent3: #374151; --h0: #374151; }
+    [data-theme="dark"][data-theme-color="red"] { --accent: #EF4444; --accent2: #F87171; --accent3: #7F1D1D; --h0: #7F1D1D; }
+    [data-theme="dark"][data-theme-color="yellow"] { --accent: #F59E0B; --accent2: #FBBF24; --accent3: #78350F; --h0: #78350F; }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -1669,6 +1698,29 @@
       font-size: 14px;
       font-weight: bold;
     }
+    /* Theme Dots */
+    .theme-selector {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .theme-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .theme-dot:hover {
+      transform: scale(1.15);
+    }
+    .theme-dot.active {
+      border-color: var(--text);
+      box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+    }
   </style>
 </head>
 
@@ -1922,6 +1974,20 @@
             <div class="setting-desc">Switch to dark color scheme</div>
           </div>
           <button class="btn btn-ghost" onclick="toggleTheme()">Toggle Theme</button>
+        </div>
+        <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div>
+            <div class="setting-label">Theme Color</div>
+            <div class="setting-desc">Choose your accent highlight</div>
+          </div>
+          <div class="theme-selector">
+            <div class="theme-dot active" data-color="pink" style="background: #D81B60;" title="Pink"></div>
+            <div class="theme-dot" data-color="green" style="background: #2D6A4F;" title="Green"></div>
+            <div class="theme-dot" data-color="blue" style="background: #1E40AF;" title="Blue"></div>
+            <div class="theme-dot" data-color="grey" style="background: #374151;" title="Grey"></div>
+            <div class="theme-dot" data-color="red" style="background: #B91C1C;" title="Red"></div>
+            <div class="theme-dot" data-color="yellow" style="background: #D97706;" title="Yellow"></div>
+          </div>
         </div>
       </div>
       <div class="settings-section">
@@ -3365,9 +3431,26 @@ ${buildHabitSummary()}`;
       localStorage.setItem('hf_theme', dark ? 'light' : 'dark');
       renderTrendChart();
     }
+    
+    function setThemeColor(color) {
+      document.documentElement.setAttribute('data-theme-color', color);
+      localStorage.setItem('hf_theme_color', color);
+      document.querySelectorAll('.theme-dot').forEach(dot => {
+        dot.classList.toggle('active', dot.dataset.color === color);
+      });
+      renderTrendChart(); // Refresh chart colors if needed
+    }
+    
+    document.querySelectorAll('.theme-dot').forEach(dot => {
+      dot.addEventListener('click', () => setThemeColor(dot.dataset.color));
+    });
+
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     const savedTheme = localStorage.getItem('hf_theme');
     if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    const savedColor = localStorage.getItem('hf_theme_color');
+    if (savedColor) setThemeColor(savedColor);
 
     // ══════════════════════════════════════════════════════════════════════════════
     // EXPORT
