@@ -2097,7 +2097,7 @@
       else { alert('Sign up successful! Please sign in.'); }
     });
 
-    const state = {
+    let state = {
       habits: [],
       data: {},
       habitNotes: {},
@@ -3459,13 +3459,31 @@ ${buildHabitSummary()}`;
     ['exportPdfBtn', 'exportPdfBtn2'].forEach(id => document.getElementById(id)?.addEventListener('click', exportPDF));
 
     document.getElementById('clearDataBtn').addEventListener('click', async () => {
-      if (confirm('This will delete ALL habit data. Are you sure?')) {
+      if (confirm('This will delete ALL habit data, XP, and achievements. Are you sure?')) {
         localStorage.removeItem('hf_v3'); 
         try {
             await supaClient.from('completions').delete().eq('user_id', currentUser.id);
             await supaClient.from('habits').delete().eq('user_id', currentUser.id);
-        } catch(e) {}
-        state = await loadState(); 
+        } catch(e) {
+            console.error('Failed to clear database:', e);
+            showToast('Failed to clear database. Local data has been reset.', 'orange');
+        }
+        
+        // Reset full local state
+        state = {
+          habits: [],
+          data: {},
+          habitNotes: {},
+          notes: {},
+          streaks: {},
+          bestStreaks: {},
+          viewYear: new Date().getFullYear(),
+          viewMonth: new Date().getMonth(),
+          xp: 0,
+          unlockedAch: [],
+          aiHistory: []
+        };
+        
         renderAll();
         showToast('All your data has been cleared.', 'green');
       }
