@@ -22,6 +22,9 @@ async function test() {
   setTimeout(() => {
     console.log('Done waiting.');
   }, 2000);
-}
+} // here I might be able to extend
 
-test();
+test(); //not a deadlock
+
+//cyber mode
+//stand down feature
