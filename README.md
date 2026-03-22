@@ -1,145 +1,73 @@
-# 🌱 HabitFlow – AI-Powered Habit Tracker
+# React + TypeScript + Vite
 
-HabitFlow is a modern habit tracking dashboard that helps users build consistency, track progress, and improve daily routines using analytics and an AI coach.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
----
+Currently, two official plugins are available:
 
-## 🚀 Features
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-* 📅 **Daily Habit Tracker** (monthly grid with checkmarks)
-* 🔥 **Streak Tracking** (current + best streak)
-* 📊 **Dashboard Analytics**
+## React Compiler
 
-  * Completion %
-  * Best / weakest habits
-  * Weekly performance
-* 🟩 **Heatmap Visualization** (GitHub-style activity grid)
-* 🏆 **Habit Scoring & Ranking**
-* 🎯 **Achievements System**
-* 🤖 **AI Habit Coach (Claude API)**
-* 🌙 **Dark Mode Support**
-* 📤 **Export (CSV / PDF)**
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
----
+## Expanding the ESLint configuration
 
-## 🧱 Tech Stack
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-* **Frontend:** HTML, CSS, JavaScript
-* **Backend:** Next.js (API Routes)
-* **Database:** Supabase (PostgreSQL + Auth)
-* **AI:** Anthropic Claude API
-* **Deployment:** Vercel
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
----
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-## ⚙️ Setup Instructions
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/your-username/habitflow.git
-cd habitflow
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
 
-### 2. Install dependencies
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-```bash
-npm install
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-### 3. Create environment file
-
-Create `.env.local` and add:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-ANTHROPIC_API_KEY=your_claude_key
-```
-
----
-
-### 4. Setup Supabase
-
-* Create a project on Supabase
-* Go to **SQL Editor**
-* Run the schema file:
-
-```
-supabase_schema.sql
-```
-
-* Enable Email Auth (Authentication → Providers)
-
----
-
-### 5. Run locally
-
-```bash
-npm run dev
-```
-
-Open:
-
-```
-http://localhost:3000
-```
-
----
-
-## 🌐 Deployment
-
-Deploy easily using Vercel:
-
-```bash
-npm install -g vercel
-vercel
-```
-
-Then add environment variables in Vercel dashboard.
-
----
-
-## 🔐 Authentication
-
-* Uses Supabase Auth (email/password)
-* User data is protected via Row Level Security (RLS)
-* Each user can only access their own habits
-
----
-
-## 🧠 AI Coach
-
-The AI Coach uses Claude to:
-
-* analyze habit patterns
-* provide suggestions
-* answer productivity questions
-
-API is handled securely via backend route:
-
-```
-/api/coach
-```
-
----
-
-## 📌 Future Improvements
-
-* Google OAuth login
-* Push notifications / reminders
-* Mobile app version
-* Advanced AI insights
-
----
-
-## 👨‍💻 Author
-
-Built by Shash 🚀
-Computer Science Engineering Student
-
----
-
-## ⭐ Notes
-
-This project started as a local habit tracker and was upgraded into a full-stack SaaS application with authentication, analytics, and AI integration.

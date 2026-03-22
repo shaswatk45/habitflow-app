@@ -124,9 +124,9 @@
     .logo {
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 24px;
       color: var(--accent);
-      letter-spacing: -.5px;
+      letter-spacing: -.75px;
     }
 
     .logo span {
@@ -137,6 +137,14 @@
       font-size: 12px;
       color: var(--text3);
       flex: 1;
+    }
+
+    /* Auth Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
     .theme-toggle {
@@ -1725,11 +1733,13 @@
 </head>
 
 <body>
+  <script type="module" src="/src/main.tsx"></script>
 
   <!-- AUTH SCREEN -->
-  <div id="authScreen" class="container" style="display: flex; justify-content: center; margin-top: 100px;">
+  <div id="authScreen" class="container" style="display: flex; justify-content: center; margin-top: 100px; position: relative;">
+    <button class="theme-toggle" onclick="toggleTheme()" style="position: absolute; top: -40px; right: 24px;" title="Toggle dark mode"></button>
     <div class="card" style="width: 100%; max-width: 400px; padding: 32px;">
-      <div style="font-family: 'Syne'; font-weight: 800; font-size: 24px; color: var(--accent); text-align: center; margin-bottom: 24px;">habit<span>flow</span></div>
+      <div style="font-family: 'Syne'; font-weight: 800; font-size: 24px; color: var(--accent); text-align: center; margin-bottom: 24px;">habit<span style="color: var(--text);">flow</span></div>
       <p style="text-align: center; color: var(--text2); margin-bottom: 24px; font-size: 14px;">Sign in to your account</p>
       <div style="margin-bottom: 16px;">
         <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);">Email</label>
@@ -1740,9 +1750,12 @@
         <input type="password" id="authPassword" class="modal-input" placeholder="••••••••">
       </div>
       <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-        <button class="btn btn-primary" id="btnSignIn" style="flex: 1;">Sign In</button>
-        <button class="btn btn-primary" id="btnSignUp" style="flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border);">Sign Up</button>
+        <button class="btn btn-primary" id="btnSignIn" style="display: none;">Sign In</button>
+        <div id="react-btnSignIn-root" style="flex: 1; display: flex;"></div>
+        <button class="btn btn-primary" id="btnSignUp" style="display: none;">Sign Up</button>
+        <div id="react-btnSignUp-root" style="flex: 1; display: flex;"></div>
       </div>
+
       <div id="authError" style="color: var(--accent-warm); font-size: 13px; text-align: center; display: none;"></div>
     </div>
   </div>
@@ -1800,7 +1813,8 @@
           <span class="month-label" id="monthLabel"></span>
           <button class="btn btn-ghost month-nav-btn" id="nextMonthBtn">›</button>
         </div>
-        <button class="btn btn-primary" id="addHabitBtn">+ Add Habit</button>
+        <button class="btn btn-primary" id="addHabitBtn" style="display: none;">+ Add Habit</button>
+        <div id="react-addHabitBtn-root"></div>
         <button class="btn btn-ghost hide-mobile" id="exportCsvBtn">📤 CSV</button>
         <button class="btn btn-ghost hide-mobile" id="exportPdfBtn">📄 PDF</button>
       </div>
@@ -1993,7 +2007,8 @@
       <div class="settings-section">
         <div class="settings-title">Manage Habits & Categories</div>
         <ul class="habit-edit-list" id="habitEditList"></ul>
-        <button class="btn btn-primary" style="margin-top:14px;" id="settingsAddHabitBtn">+ Add New Habit</button>
+        <button class="btn btn-primary" style="display: none;" id="settingsAddHabitBtn">+ Add New Habit</button>
+        <div id="react-settingsAddHabitBtn-root" style="margin-top:14px;"></div>
       </div>
       <div class="settings-section">
         <div class="settings-title">Export Data</div>
